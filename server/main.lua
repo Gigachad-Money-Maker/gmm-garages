@@ -4,6 +4,11 @@ lib.callback.register("garage:GetPlayerVehicles", function(source, garage)
     local player = Ox.GetPlayer(source)
     if player then
         local vehicles = MySQL.query.await('SELECT * FROM vehicles WHERE owner = ? and stored = ?', { player.charid, garage })
+        for i=1, #vehicles do
+            local vehicle = vehicles[i]
+            local modelData = Ox.GetVehicleData(vehicle.model)
+            vehicles[i].name = modelData.name
+        end
         return vehicles
     else
         return false

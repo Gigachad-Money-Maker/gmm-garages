@@ -12,6 +12,14 @@ local function getClosestGarageSpot()
 end
 
 local function parkVehicle(garage)
+    if garage == 'impound' then
+        lib.notify({
+            title = 'Garage',
+            description = 'Cars can\'t be parked in Impound',
+            type = 'error'
+        })
+        return
+    end
     local vehicles = lib.callback.await("garages:ParkCar", false, garage)
 end
 
@@ -30,7 +38,7 @@ local function takeOutVehicle(garage)
     else
         for k, v in pairs(vehicles) do
             options[#options+1] = {
-                title = 'Dicks',
+                title = v.name,
                 description = "Plate : " .. (v.plate or "12345678"),
                 serverEvent = 'qb-garages:server:PayDepotPrice',
                 args = v.plate,
