@@ -27,14 +27,6 @@ local function takeOutVehicle(garage)
         options[#options+1] = {
             title = 'You don\'t have a vehicle in this garage',
         }
-        -- options[#options+1] = {
-        --     title = 'Dicks',
-        --     description = "Plate : 12345678",
-        --     args = "12345678",
-        --     onSelect = function()
-        --         lib.callback.await('garages:TakeOutCar', false, nil, nil, GetEntityCoords(cache.ped))
-        --     end
-        -- }
     else
         for k, v in pairs(vehicles) do
             options[#options+1] = {
@@ -44,7 +36,13 @@ local function takeOutVehicle(garage)
                 args = v.plate,
                 onSelect = function()
                     local spot = getClosestGarageSpot()
-                    lib.callback.await('garages:TakeOutCar', false, v.id, currentGarage, spot)
+                    local vehNet = lib.callback.await('garages:TakeOutCar', false, v.id, currentGarage, spot)
+                    NetworkRequestControlOfNetworkId(vehNet) --TODO this needs to be improved
+                    while not NetworkHasControlOfNetworkId(vehNet) do
+                        NetworkRequestControlOfNetworkId(vehNet)
+                        Wait(1)
+                    end
+                    SetPedIntoVehicle(cache.ped, NetworkGetEntityFromNetworkId(vehNet), -1)
                 end
             }
         end
@@ -59,9 +57,9 @@ end
 AddEventHandler('onClientResourceStart', function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
     for key, garage in pairs(Config.Garages) do
-        for _, garageRow in pairs(garage.garagePoints) do
+        for i=1, #garage.garagePolys do
             lib.zones.poly({
-                points = garageRow,
+                points = garage.garagePolys[i],
                 debug = Config.Debug,
                 onEnter = function()
                     currentGarage = key
