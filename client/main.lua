@@ -6,6 +6,7 @@ local function getClosestGarageSpot()
     for i=1, #Config.Garages[currentGarage].spawnPoints do
         if #(pedCoords - Config.Garages[currentGarage].spawnPoints[i].xyz) < 2.0 then
             spot = i
+            break
         end
     end
     return spot
