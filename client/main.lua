@@ -1,7 +1,21 @@
 local currentGarage = nil
 
-local function getVehicles(garage)
-    print(garage)
+local function getClosestGarageSpot()
+    local spot = nil
+    local pedCoords = GetEntityCoords(cache.ped)
+    for i=1, #Config.Garages[currentGarage].spawnPoints do
+        if #(pedCoords - Config.Garages[currentGarage].spawnPoints[i].xyz) < 2.0 then
+            spot = i
+        end
+    end
+    return spot
+end
+
+local function parkVehicle(garage)
+    local vehicles = lib.callback.await("garages:ParkCar", false, garage)
+end
+
+local function takeOutVehicle(garage)
     local vehicles = lib.callback.await("garage:GetPlayerVehicles", false, garage)
     local resgisterMe = {
         id = 'garages_vehicles',
@@ -13,14 +27,14 @@ local function getVehicles(garage)
         options[#options+1] = {
             title = 'You don\'t have a vehicle in this garage',
         }
-        options[#options+1] = {
-            title = 'Dicks',
-            description = "Plate : 12345678",
-            args = "12345678",
-            onSelect = function()
-                lib.callback.await('garages:TakeOutCar', false, nil, nil, GetEntityCoords(cache.ped))
-            end
-        }
+        -- options[#options+1] = {
+        --     title = 'Dicks',
+        --     description = "Plate : 12345678",
+        --     args = "12345678",
+        --     onSelect = function()
+        --         lib.callback.await('garages:TakeOutCar', false, nil, nil, GetEntityCoords(cache.ped))
+        --     end
+        -- }
     else
         for k, v in pairs(vehicles) do
             options[#options+1] = {
@@ -29,7 +43,8 @@ local function getVehicles(garage)
                 serverEvent = 'qb-garages:server:PayDepotPrice',
                 args = v.plate,
                 onSelect = function()
-                    lib.callback.await('garages:TakeOutCar', false, nil, nil, GetEntityCoords(cache.ped))
+                    local spot = getClosestGarageSpot()
+                    lib.callback.await('garages:TakeOutCar', false, v.id, currentGarage, spot)
                 end
             }
         end
@@ -59,7 +74,11 @@ AddEventHandler('onClientResourceStart', function(resourceName)
                     --         print('Garage')
                     --     end
                     -- })
-                    getVehicles(key)
+                    if not cache.vehicle then
+                        takeOutVehicle(key)
+                    else
+                        parkVehicle(key)
+                    end
                 end,
                 onExit = function()
                     currentGarage = nil
