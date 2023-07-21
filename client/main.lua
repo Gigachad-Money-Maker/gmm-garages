@@ -31,7 +31,7 @@ local function takeOutVehicle(garage)
         options = {}
     }
     local options = {}
-    if vehicles == nil then
+    if #vehicles == 0 then
         options[#options+1] = {
             title = 'You don\'t have a vehicle in this garage',
         }
