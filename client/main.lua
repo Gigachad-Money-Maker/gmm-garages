@@ -37,6 +37,7 @@ local function takeOutVehicle(garage)
                 onSelect = function()
                     local spot = getClosestGarageSpot()
                     local vehNet = lib.callback.await('garages:TakeOutCar', false, v.id, currentGarage, spot)
+                    if not vehNet then return end
                     NetworkRequestControlOfNetworkId(vehNet) --TODO this needs to be improved
                     while not NetworkHasControlOfNetworkId(vehNet) do
                         NetworkRequestControlOfNetworkId(vehNet)
