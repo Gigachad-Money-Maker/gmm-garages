@@ -18,7 +18,7 @@ lib.callback.register("garages:TakeOutCar", function(source, id, garage, spot)
             local vehicle = Ox.CreateVehicle(tonumber(id), vector3(spotCoords.x, spotCoords.y + 1.0, spotCoords.z) , spotCoords.w)
             vehicle.setOwner(player.charid)
             while not DoesEntityExist(vehicle.entity) do Wait(5) end
-            --SetPedIntoVehicle(player.ped, vehicle.entity, -1)
+            --TaskWarpPedIntoVehicle(player.ped, vehicle.entity, -1)
             return vehicle.netid
         else
             return false

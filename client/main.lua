@@ -65,19 +65,18 @@ AddEventHandler('onClientResourceStart', function(resourceName)
                 onEnter = function()
                     currentGarage = key
                     lib.showTextUI("[Parking]")
-                    -- lib.addRadialItem({
-                    --     id = 'garage_access',
-                    --     icon = 'warehouse',
-                    --     label = 'Garage',
-                    --     onSelect = function()
-                    --         print('Garage')
-                    --     end
-                    -- })
-                    if not cache.vehicle then
-                        takeOutVehicle(key)
-                    else
-                        parkVehicle(key)
-                    end
+                    lib.addRadialItem({
+                        id = 'garage_access',
+                        icon = 'warehouse',
+                        label = 'Garage',
+                        onSelect = function()
+                            if not cache.vehicle then
+                                takeOutVehicle(key)
+                            else
+                                parkVehicle(key)
+                            end
+                        end
+                    })
                 end,
                 onExit = function()
                     currentGarage = nil
