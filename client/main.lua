@@ -92,11 +92,11 @@ AddEventHandler('onClientResourceStart', function(resourceName)
                 debug = Config.Debug,
                 onEnter = function()
                     currentGarage = key
-                    lib.showTextUI("[Parking]")
+                    lib.showTextUI("[Parking]", {icon = 'fas fa-warehouse'})
                     lib.addRadialItem({
-                        id = 'garage_access',
+                        id = 'parking_access',
                         icon = 'warehouse',
-                        label = 'Garage',
+                        label = 'Parking',
                         onSelect = function()
                             if not cache.vehicle then
                                 takeOutVehicle(key)
@@ -109,7 +109,7 @@ AddEventHandler('onClientResourceStart', function(resourceName)
                 onExit = function()
                     currentGarage = nil
                     lib.hideTextUI()
-                    lib.removeRadialItem('garage_access')
+                    lib.removeRadialItem('parking_access')
                 end,
                 inside = function()
                     
