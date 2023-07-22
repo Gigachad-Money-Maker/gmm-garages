@@ -1,5 +1,23 @@
 local currentGarage = nil
 
+local function createBlip(lot, name)
+	local blip = AddBlipForCoord(lot.x, lot.y, lot.z)
+	SetBlipSprite(blip, 50)
+	SetBlipDisplay(blip, 4)
+	SetBlipScale(blip, 0.7)
+	SetBlipColour(blip, 22)
+	SetBlipAsShortRange(blip, true)
+    BeginTextCommandSetBlipName("STRING")
+    if name ~= 'impound' then
+		AddTextComponentSubstringPlayerName('Parking')
+    else
+        AddTextComponentSubstringPlayerName('Impound')
+    end
+	EndTextCommandSetBlipName(blip)
+
+	return blip
+end
+
 local function getClosestGarageSpot()
     local spot = nil
     local pedCoords = GetEntityCoords(cache.ped)
@@ -67,6 +85,7 @@ end
 AddEventHandler('onClientResourceStart', function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
     for key, garage in pairs(Config.Garages) do
+        createBlip(garage.spawnPoints[1].xyz, key)
         for i=1, #garage.garagePolys do
             lib.zones.poly({
                 points = garage.garagePolys[i],

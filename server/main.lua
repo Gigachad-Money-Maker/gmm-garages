@@ -16,8 +16,17 @@ lib.callback.register("garage:GetPlayerVehicles", function(source, garage)
 end)
 
 lib.callback.register("garages:TakeOutCar", function(source, id, garage, spot)
-    local player = Ox.GetPlayer(source)
+    local src = source
+    local player = Ox.GetPlayer(src)
     if player then
+
+        if garage == 'impound' then
+            local success = exports.ox_inventory:RemoveItem(player.source, 'money', Config.ImpoundFee)
+            if not success then
+                TriggerClientEvent('ox_lib:notify', src, { type = 'error', description = 'Not enough money' })
+                return
+            end
+        end
         local spotCoords = Config.Garages[garage].spawnPoints[spot]
         if spotCoords then
             local vehicle = Ox.CreateVehicle(tonumber(id), vector3(spotCoords.x, spotCoords.y + 1.0, spotCoords.z) , spotCoords.w)
