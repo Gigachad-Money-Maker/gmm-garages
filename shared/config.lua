@@ -4,6 +4,7 @@ Config.ImpoundFee = 10
 Config.Garages = {
     ["alta"] = {
         label = "Alta St Apartments",
+        blipIcon = 50,
         garagePolys = {
             {
                 vec3(-295.052, -988.122, 31.081),
@@ -36,6 +37,7 @@ Config.Garages = {
     },
     ["motel"] = {
         label = "Motel Parking",
+        blipIcon = 50,
         garagePolys = {
             {
                 vec3(285.424, -345.069, 44.920),
@@ -61,6 +63,7 @@ Config.Garages = {
     },
     ["impound"] = {
         label = "Davis Impound",
+        blipIcon = 68,
         garagePolys = {
             {
                 vec3(396.508, -1641.649, 29.292),
