@@ -1,6 +1,4 @@
-local Vehicles = {}
-
-lib.callback.register("garage:GetPlayerVehicles", function(source, garage)
+lib.callback.register("gmm-garages:server:GetPlayerVehicles", function(source, garage)
     local player = Ox.GetPlayer(source)
     if player then
         local vehicles = MySQL.query.await('SELECT * FROM vehicles WHERE owner = ? and stored = ?', { player.charid, garage })
@@ -8,6 +6,7 @@ lib.callback.register("garage:GetPlayerVehicles", function(source, garage)
             local vehicle = vehicles[i]
             local modelData = Ox.GetVehicleData(vehicle.model)
             vehicles[i].name = modelData.name
+            vehicles[i].plate = vehicles[i].data?.fakeplate or vehicles[i].plate
         end
         return vehicles
     else
@@ -15,7 +14,7 @@ lib.callback.register("garage:GetPlayerVehicles", function(source, garage)
     end
 end)
 
-lib.callback.register("garages:TakeOutCar", function(source, id, garage, spot)
+lib.callback.register("gmm-garages:server:TakeOutCar", function(source, id, garage, spot)
     local src = source
     local player = Ox.GetPlayer(src)
     if player then
@@ -40,10 +39,10 @@ lib.callback.register("garages:TakeOutCar", function(source, id, garage, spot)
                 end
             end
             vehicle.setOwner(player.charid)
-            
             local fakePlate = vehicle.get('fakeplate')
-            print('fakeplate', fakePlate)
-            Entity(vehicle.entity).state.fakeplate = fakePlate
+            if fakePlate and type(fakePlate) ~= 'table' or nil then
+                Entity(vehicle.entity).state.fakeplate = fakePlate
+            end
             
             return vehicle.netid
         else
@@ -54,19 +53,52 @@ lib.callback.register("garages:TakeOutCar", function(source, id, garage, spot)
     end
 end)
 
-lib.callback.register("garages:ParkCar", function (source, garage)
+local function pedsLeaveVehicle(seats, vehiceleEntity)
+    local passengers = {}
+    for i = -1, seats - 1 do
+        local ped = GetPedInVehicleSeat(vehiceleEntity, i)
+        if ped ~= 0 then
+            passengers[#passengers + 1] = ped
+            TaskLeaveVehicle(ped, vehiceleEntity, 0)
+        end
+    end
+
+    if next(passengers) then
+        local empty
+        while not empty do
+            Wait(100)
+            empty = true
+            for i = 1, #passengers do
+                local passenger = passengers[i]
+                if GetVehiclePedIsIn(passenger) == vehiceleEntity then
+                    empty = false
+                end
+            end
+        end
+
+        Wait(300)
+    end
+end
+
+lib.callback.register("gmm-garages:server:ParkCar", function (source, garage)
     local player = Ox.GetPlayer(source)
     if player then 
         local vehicle = Ox.GetVehicle(GetVehiclePedIsIn(player.ped, false))
-        vehicle.set('fakeplate', 'ASDF1234')
-        vehicle.setStored(garage, true)
+        if player.charid == vehicle.owner then
+            local vehicleData = Ox.GetVehicleData(vehicle.model)
+            pedsLeaveVehicle(vehicleData.seats, vehicle.entity)
+            local plate = GetVehicleNumberPlateText(vehicle.entity)
+            vehicle.set('fakeplate', plate)
+            vehicle.setStored(garage, true)
+        else
+            
+        end
     else
         return false
     end
 end)
 
 local hookId = exports.ox_inventory:registerHook('createItem', function(payload)
-    print(json.encode(payload, { indent = true }))
     local metadata = payload.metadata
     metadata.label = 'License Plate'
     return metadata
@@ -76,3 +108,43 @@ end, {
         license_plate = true
     }
 })
+
+lib.callback.register('gmm-garages:server:UsePlateTool', function(source, plate, netId, removeFakePlate)
+    print('fake plate', removeFakePlate)
+    local src = source
+    local success = exports.ox_inventory:RemoveItem(src, 'license_plate_tool', 1)
+    if success then
+        local metadata = {
+            plate_number = plate
+        }
+        exports.ox_inventory:AddItem(src, 'license_plate', 1, metadata)
+        if removeFakePlate then
+            local vehEnt = NetworkGetEntityFromNetworkId(netId)
+            local vehicle = Ox.GetVehicle(vehEnt)
+            vehicle.set('fakeplate', nil)
+            local properties = vehicle.get('properties')
+            local newPlate = properties.plate
+            SetVehicleNumberPlateText(vehicle.entity, newPlate)
+        end
+    end
+end)
+
+lib.callback.register('gmm-garages:server:UsePlate', function(source, netId, slot)
+    local src = source
+    local itemData = exports.ox_inventory:GetSlot(src, slot)
+    if exports.ox_inventory:RemoveItem(src, 'license_plate', 1, nil, slot) then
+        print(json.encode(itemData, { indent = true }))
+        local vehEnt = NetworkGetEntityFromNetworkId(netId)
+        local vehicle = Ox.GetVehicle(vehEnt)
+        if vehicle ~= nil then
+            vehicle.set('fakeplate', itemData.metadata.plate_number)
+            Entity(vehicle.entity).state.fakeplate = itemData.metadata.plate_number
+            SetVehicleNumberPlateText(vehicle.entity, itemData.metadata.plate_number)
+            return true
+        else
+            return false
+        end
+    else
+        return false
+    end
+end)

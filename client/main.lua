@@ -18,22 +18,22 @@ local function getClosestGarageSpot()
     local spot = nil
     local pedCoords = GetEntityCoords(cache.ped)
     for i=1, #Config.Garages[currentGarage].spawnPoints do
+        local dist = #(pedCoords - Config.Garages[currentGarage].spawnPoints[i].xyz)
         if #(pedCoords - Config.Garages[currentGarage].spawnPoints[i].xyz) < 2.0 then
-            local area = lib.getNearbyVehicles(pedCoords, 2.0, false)
-            if #area <= 0 then
-                spot = i
-                break
-            end
-
+            spot = i
+            break
         end
     end
 
-    if spot == nil then
+    local vehArea = lib.getNearbyVehicles(Config.Garages[currentGarage].spawnPoints[spot].xyz, 2.0, false)
+    local pedArea = lib.getNearbyPlayers(Config.Garages[currentGarage].spawnPoints[spot].xyz, 2.0, false)
+    if #vehArea > 0 or #pedArea > 0 then
         lib.notify({
             title = 'Garage',
-            description = 'Spot is full',
+            description = 'Parking spot is blocked',
             type = 'error'
         })
+        return nil
     end
     return spot
 end
@@ -47,13 +47,13 @@ local function parkVehicle(garage)
         })
         return
     end
-    local vehicles = lib.callback.await("garages:ParkCar", false, garage)
+    local vehicles = lib.callback.await("gmm-garages:server:ParkCar", false, garage)
 end
 
 local function takeOutVehicle(garage)
-    local vehicles = lib.callback.await("garage:GetPlayerVehicles", false, garage)
-    local resgisterMe = {
-        id = 'garages_vehicles',
+    local vehicles = lib.callback.await("gmm-garages:server:GetPlayerVehicles", false, garage)
+    local registerMe = {
+        id = 'gmm-garages:vehicles',
         title = 'Parked Vehicles - '.. Config.Garages[currentGarage].label,
         options = {}
     }
@@ -67,12 +67,10 @@ local function takeOutVehicle(garage)
             options[#options+1] = {
                 title = v.name,
                 description = "Plate : " .. (v.plate or "12345678"),
-                serverEvent = 'qb-garages:server:PayDepotPrice',
                 args = v.plate,
                 onSelect = function()
                     local spot = getClosestGarageSpot()
-                    print(spot)
-                    local vehicleNet = lib.callback.await('garages:TakeOutCar', false, v.id, currentGarage, spot)
+                    local vehicleNet = lib.callback.await('gmm-garages:server:TakeOutCar', false, v.id, currentGarage, spot)
                     if not vehicleNet then return end
                     local attemptsCounter = 0
                     local attemptsLimit = 400 -- 400*5 = 2s
@@ -81,18 +79,23 @@ local function takeOutVehicle(garage)
                     end
                     local vehicleEnt = NetworkGetEntityFromNetworkId(vehicleNet)
                     TaskWarpPedIntoVehicle(cache.ped, vehicleEnt, -1)
-                    while not Entity(vehicleEnt).state.fakeplate do
+                    local attemptsCounter2 = 0
+                    local attemptsLimit2 = 400 -- 400*5 = 2s
+                    while not Entity(vehicleEnt).state.fakeplate and attemptsCounter2 < attemptsLimit2 do
                         Wait(5)
                     end
-                    local fakePlate = Entity(vehicleEnt).state.fakeplate
-                    SetVehicleNumberPlateText(vehicleEnt, fakePlate)
+                    local fakePlate = Entity(vehicleEnt).state and Entity(vehicleEnt).state.fakeplate or nil
+                    print(json.encode(fakePlate, { indent = true }))
+                    if fakePlate ~= nil then
+                        SetVehicleNumberPlateText(vehicleEnt, fakePlate)
+                    end
                 end
             }
         end
     end
-    resgisterMe["options"] = options
-    lib.registerContext(resgisterMe)
-    lib.showContext('garages_vehicles')
+    registerMe["options"] = options
+    lib.registerContext(registerMe)
+    lib.showContext('gmm-garages:vehicles')
 
     return vehicles
 end
@@ -137,14 +140,19 @@ end)
 local options = {
     {
         name = 'gmm-garages:stealPlate',
-        icon = 'fa-solid fa-oil-can',
+        icon = 'fa-solid fa-screwdriver-wrench',
         label = 'Steal Plate',
+        items = 'license_plate_tool',
+        bones = {
+            "bonnet",
+            "boot"
+        },
         canInteract = function(entity, distance, coords, name, boneId)
-            return type(coords) ~= 'table' and #(coords - GetEntityCoords(entity)) < 1.9 or true
+            return not cache.vehicle and type(coords) ~= 'table' and #(coords - GetEntityCoords(entity)) < 5.0 or true
         end,
         onSelect = function(data)
             CreateThread(function()
-                lib.progressCircle({
+                if lib.progressCircle({
                     duration = 2000,
                     position = 'bottom',
                     useWhileDead = false,
@@ -152,7 +160,16 @@ local options = {
                     disable = {
                         car = true,
                     },
-                })
+                }) then
+                    local vehEnt = data.entity
+                    
+                    local plate = GetVehicleNumberPlateText(vehEnt)
+                    local removeFakePlate = Entity(vehEnt).state.fakeplate and true or false
+                    local vehNetId = NetworkGetNetworkIdFromEntity(vehEnt)
+                    lib.callback.await('gmm-garages:server:UsePlateTool', false, plate, vehNetId, removeFakePlate) -- need to make it remove a fake plate if statebag is present
+                else
+                    print('asdf')
+                end
             end)
         end
     },
@@ -160,14 +177,20 @@ local options = {
 
 exports.ox_target:addGlobalVehicle(options)
 
-function UsePlate()
-    print("ASDF")
-end
+exports.ox_inventory:displayMetadata({
+    plate_number = 'Plate Number',
+})
 
-exports('UsePlate', UsePlate)
+lib.callback.register('ox:getNearbyVehicles', function(plate)
+    local vehicle = lib.getClosestVehicle(GetEntityCoords(cache.ped), 3.0, true)
+    SetVehicleNumberPlateText(vehicle, plate)
+end)
 
-function UsePlateTool()
-    print("ASDF2")
-end
-
-exports('UsePlateTool', UsePlateTool)
+exports('UsePlate', function(data)
+    local vehicle = lib.getClosestVehicle(GetEntityCoords(cache.ped), 3.0, true)
+    local vehNetId = NetworkGetNetworkIdFromEntity(vehicle)
+    local response = lib.callback.await('gmm-garages:server:UsePlate', false, vehNetId, data.slot)
+    if response then
+        --SetVehicleNumberPlateText(vehicle, response)
+    end
+end)
