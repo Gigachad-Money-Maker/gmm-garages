@@ -25,6 +25,9 @@ A very simple garage and impound script for the Ox framework, providing vehicle 
 Big thanks to DokaDoka and Linden for creating the Ox framework and resources; keep up the great work! Full disclosure, I used snippets and functions from [ox_property](https://github.com/overextended/ox_property). 
 
 ## Preview
-![image](https://github.com/Gigachad-Money-Maker/gmm-garages/assets/70592880/0f92e503-7809-490c-83f5-276f6a431a93)
-![image](https://github.com/Gigachad-Money-Maker/gmm-garages/assets/70592880/110c3894-e2ab-44c4-8716-c6e279709780)
-![image](https://github.com/Gigachad-Money-Maker/gmm-garages/assets/70592880/1a8913a8-868a-43bd-951e-9572c49227e9)
+![image](https://github.com/Gigachad-Money-Maker/gmm-garages/assets/70592880/4ec6aacd-87b8-4fa0-a483-0ef417dd5eff)
+
+![image](https://github.com/Gigachad-Money-Maker/gmm-garages/assets/70592880/fc59a25f-5ec9-4493-a360-c36add2fcaf5)
+
+![image](https://github.com/Gigachad-Money-Maker/gmm-garages/assets/70592880/7866829a-fa4d-4cb8-8f2c-efe0f40d06b6)
+
