@@ -47,7 +47,6 @@ local function parkVehicle(garage)
         })
         return
     end
-    local vehicles = lib.callback.await("gmm-garages:server:ParkCar", false, garage)
 end
 
 local function takeOutVehicle(garage)
@@ -188,6 +187,6 @@ exports('UsePlate', function(data)
     local vehNetId = NetworkGetNetworkIdFromEntity(vehicle)
     local response = lib.callback.await('gmm-garages:server:UsePlate', false, vehNetId, data.slot)
     if response then
-        --SetVehicleNumberPlateText(vehicle, response)
+        SetVehicleNumberPlateText(vehicle, response)
     end
 end)
