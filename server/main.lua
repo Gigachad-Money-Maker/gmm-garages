@@ -109,7 +109,6 @@ end, {
 })
 
 lib.callback.register('gmm-garages:server:UsePlateTool', function(source, plate, netId, removeFakePlate)
-    print('fake plate', removeFakePlate)
     local src = source
     local success = exports.ox_inventory:RemoveItem(src, 'license_plate_tool', 1)
     if success then
@@ -132,7 +131,6 @@ lib.callback.register('gmm-garages:server:UsePlate', function(source, netId, slo
     local src = source
     local itemData = exports.ox_inventory:GetSlot(src, slot)
     if exports.ox_inventory:RemoveItem(src, 'license_plate', 1, nil, slot) then
-        print(json.encode(itemData, { indent = true }))
         local vehEnt = NetworkGetEntityFromNetworkId(netId)
         local vehicle = Ox.GetVehicle(vehEnt)
         if vehicle ~= nil then

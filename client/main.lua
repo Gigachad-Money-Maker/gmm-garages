@@ -85,7 +85,6 @@ local function takeOutVehicle(garage)
                         Wait(5)
                     end
                     local fakePlate = Entity(vehicleEnt).state and Entity(vehicleEnt).state.fakeplate or nil
-                    print(json.encode(fakePlate, { indent = true }))
                     if fakePlate ~= nil then
                         SetVehicleNumberPlateText(vehicleEnt, fakePlate)
                     end
@@ -167,8 +166,6 @@ local options = {
                     local removeFakePlate = Entity(vehEnt).state.fakeplate and true or false
                     local vehNetId = NetworkGetNetworkIdFromEntity(vehEnt)
                     lib.callback.await('gmm-garages:server:UsePlateTool', false, plate, vehNetId, removeFakePlate) -- need to make it remove a fake plate if statebag is present
-                else
-                    print('asdf')
                 end
             end)
         end
