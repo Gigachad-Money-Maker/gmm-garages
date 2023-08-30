@@ -98,12 +98,11 @@ lib.callback.register("gmm-garages:server:ParkCar", function (source, garage)
     end
 end)
 
-local hookId = exports.ox_inventory:registerHook('createItem', function(payload)
+exports.ox_inventory:registerHook('createItem', function(payload)
     local metadata = payload.metadata
     metadata.label = 'License Plate'
     return metadata
 end, {
-    print = true,
     itemFilter = {
         license_plate = true
     }
